@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Restaurant Menu</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --text: #000;
+      --card: #f5f5f5;
+      --button: #ff6347;
+      --button-hover: #e5533f;
+    }
+
+    body.dark {
+      --bg: #121212;
+      --text: #fff;
+      --card: #1e1e1e;
+      --button: #ffa07a;
+      --button-hover: #ff7f50;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .toggle {
+      float: right;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      background: var(--button);
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .controls input, .controls button {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    .controls input {
+      width: 60%;
+      max-width: 300px;
+    }
+
+    .controls button {
+      background-color: var(--button);
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .controls button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background-color: var(--card);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      margin: 5px 0;
+    }
+
+    .card .price {
+      font-weight: bold;
+      margin: 5px 0;
+    }
+
+    .card .availability {
+      font-size: 14px;
+      color: grey;
+      margin-bottom: 10px;
+    }
+
+    .cart {
+      margin-top: 30px;
+      background: var(--card);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .cart h2 {
+      margin-top: 0;
+    }
+
+    .cart ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .cart li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="toggle" onclick="toggleMode()">Toggle Mode</button>
+    <h1>🍽️ APSAR Restaurant Menu</h1>
+
+    <div class="controls">
+      <input type="text" id="searchInput" onkeyup="renderMenu()" placeholder="Search for a dish..." />
+      <button onclick="renderMenu('all')">All</button>
+      <button onclick="renderMenu('starters')">Starters</button>
+      <button onclick="renderMenu('main')">Main Course</button>
+      <button onclick="renderMenu('dessert')">Desserts</button>
+    </div>
+
+    <div class="menu" id="menu"></div>
+
+    <div class="cart" id="cart">
+      <h2>🛒 Cart</h2>
+      <ul id="cartItems"></ul>
+      <p><strong>Total:</strong> ₹<span id="cartTotal">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    const menuItems = [
+      { name: "Tomato Soup", category: "starters", description: "Classic creamy tomato soup.", price: 99, available: true, image: "https://www.themealdb.com/images/media/meals/stpuws1511191310.jpg" },
+      { name: "Spring Rolls", category: "starters", description: "Crispy veggie rolls.", price: 120, available: true, image: "https://www.themealdb.com/images/media/meals/1529444830.jpg" },
+      { name: "Grilled Chicken", category: "main", description: "Grilled chicken with sides.", price: 299, available: true, image: "https://www.themealdb.com/images/media/meals/wvpsxx1468256321.jpg" },
+      { name: "Paneer Butter Masala", category: "main", description: "Paneer in creamy sauce.", price: 250, available: false, image: "https://www.themealdb.com/images/media/meals/tswywr1511057064.jpg" },
+      { name: "Chocolate Cake", category: "dessert", description: "Rich chocolate cake.", price: 160, available: true, image: "https://www.themealdb.com/images/media/meals/tqtywx1468317395.jpg" },
+      { name: "Ice Cream Sundae", category: "dessert", description: "Sundae with toppings.", price: 140, available: true, image: "https://www.themealdb.com/images/media/meals/ysqupp1511640538.jpg" }
+    ];
+
+    const menuDiv = document.getElementById("menu");
+    const cartItems = document.getElementById("cartItems");
+    const cartTotal = document.getElementById("cartTotal");
+
+    let cart = [];
+
+    function renderMenu(category = "all") {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      menuDiv.innerHTML = "";
+
+      const filtered = menuItems.filter(item => 
+        (category === "all" || item.category === category) &&
+        item.name.toLowerCase().includes(search)
+      );
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" />
+          <h3>${item.name}</h3>
+          <p>${item.description}</p>
+          <p class="price">₹${item.price}</p>
+          <p class="availability">${item.available ? "Available ✅" : "Out of stock ❌"}</p>
+          ${item.available ? `<button onclick="addToCart('${item.name}', ${item.price})">Add to Cart</button>` : ''}
+        `;
+        menuDiv.appendChild(card);
+      });
+    }
+
+    function addToCart(name, price) {
+      cart.push({ name, price });
+      updateCart();
+    }
+
+    function updateCart() {
+      cartItems.innerHTML = "";
+      let total = 0;
+
+      cart.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.name} - ₹${item.price}`;
+        cartItems.appendChild(li);
+        total += item.price;
+      });
+
+      cartTotal.textContent = total;
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark");
+      }
+      renderMenu();
+    };
+  </script>
+</body>
+</html>
